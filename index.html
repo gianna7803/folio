@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folio — Turn your work into words, everywhere.</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #F7F4EE; --ink: #1A1814; --ink-muted: #6B6860; --ink-faint: #C2BFB8;
+    --accent: #C8502A; --accent-light: #F5E8E3; --surface: #FFFFFF;
+    --border: rgba(26,24,20,0.12); --border-strong: rgba(26,24,20,0.25);
+    --linkedin: #0A66C2; --instagram: #C13584; --portfolio: #2D6A4F;
+    --radius: 12px; --radius-sm: 6px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+  .app { max-width: 980px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .wordmark { font-family: 'DM Serif Display', serif; font-size: 28px; letter-spacing: -0.5px; }
+  .wordmark em { font-style: italic; color: var(--accent); }
+  .tagline { font-size: 13px; color: var(--ink-muted); }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  @media (max-width: 680px) { .layout { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+  .panel-header { padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+  .step-badge { font-size: 10px; font-weight: 600; background: var(--accent); color: white; border-radius: 100px; padding: 2px 8px; }
+  .live-badge { font-size: 10px; font-weight: 600; background: var(--portfolio); color: white; border-radius: 100px; padding: 2px 8px; display: flex; align-items: center; gap: 5px; }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #7FD4A9; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+  .panel-body { padding: 1.25rem; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-muted); margin-bottom: 5px; letter-spacing: 0.03em; }
+  input[type="text"], textarea, select { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; outline: none; transition: border-color 0.15s; resize: vertical; appearance: none; -webkit-appearance: none; }
+  input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--accent); background: white; }
+  textarea { line-height: 1.5; }
+  .field { margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tone-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tone-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 100px; border: 1px solid var(--border-strong); background: transparent; color: var(--ink-muted); cursor: pointer; transition: all 0.15s; }
+  .tone-btn:hover { background: var(--cream); }
+  .tone-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+  /* Image upload — input is NOT inside the styled zone to avoid overflow:hidden blocking it */
+  .upload-zone { border: 1.5px dashed var(--ink-faint); border-radius: var(--radius-sm); padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--cream); position: relative; }
+  .upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+  .upload-zone.has-image { border-style: solid; border-color: var(--border); padding: 0; cursor: default; }
+  .upload-preview { width: 100%; height: 160px; object-fit: cover; border-radius: var(--radius-sm); display: block; }
+  .upload-placeholder { pointer-events: none; }
+  .upload-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+  .upload-label { font-size: 12px; color: var(--ink-muted); }
+  .upload-label strong { color: var(--accent); }
+  .image-actions { display: flex; gap: 8px; margin-top: 6px; }
+  .img-action-btn { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--border-strong); background: white; color: var(--ink-muted); cursor: pointer; transition: all 0.15s; }
+  .img-action-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
+
+  .generate-btn { width: 100%; font-family: 'DM Serif Display', serif; font-size: 17px; font-style: italic; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; margin-top: 1.25rem; }
+  .generate-btn:hover { background: #B8441F; transform: translateY(-1px); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { background: var(--ink-faint); cursor: not-allowed; transform: none; }
+
+  .output-panel { grid-column: 1 / -1; }
+  .platform-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tab-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; padding: 10px 16px; border: none; background: transparent; cursor: pointer; color: var(--ink-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; letter-spacing: 0.04em; text-transform: uppercase; transition: all 0.15s; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .tab-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .view-toggle { display: flex; border: 1px solid var(--border); border-radius: 100px; overflow: hidden; margin-left: auto; }
+  .view-btn { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; padding: 4px 12px; border: none; background: transparent; cursor: pointer; color: var(--ink-muted); transition: all 0.15s; }
+  .view-btn.active { background: var(--ink); color: white; }
+  .output-area { min-height: 260px; }
+  .output-pane { display: none; }
+  .raw-view { padding: 1.25rem; }
+  .output-content { font-size: 14px; line-height: 1.75; color: var(--ink); white-space: pre-wrap; }
+  .output-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+  .char-count { font-size: 12px; color: var(--ink-muted); }
+  .copy-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 5px 14px; background: var(--cream); border: 1px solid var(--border-strong); border-radius: 100px; cursor: pointer; color: var(--ink); transition: all 0.15s; }
+  .copy-btn:hover { background: var(--ink); color: white; }
+  .preview-view { display: none; padding: 1.25rem; }
+
+  /* LinkedIn mock */
+  .li-preview { max-width: 560px; margin: 0 auto; background: white; border: 1px solid #E0DFDC; border-radius: 8px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .li-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px 8px; }
+  .li-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #C8502A, #E8774A); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+  .li-name { font-weight: 600; font-size: 14px; color: #1A1814; }
+  .li-meta { font-size: 12px; color: #666; }
+  .li-body { padding: 0 16px 8px; font-size: 14px; line-height: 1.5; color: #1A1814; white-space: pre-wrap; }
+  .li-image { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+  .li-image-placeholder { width: 100%; height: 180px; background: var(--cream); display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 13px; }
+  .li-actions { display: flex; gap: 4px; padding: 4px 16px 12px; border-top: 1px solid #E0DFDC; margin-top: 8px; }
+  .li-action { font-size: 13px; color: #666; padding: 6px 10px; border-radius: 4px; cursor: default; }
+
+  /* Instagram mock */
+  .ig-preview { max-width: 380px; margin: 0 auto; background: white; border: 1px solid #DBDBDB; border-radius: 8px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .ig-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+  .ig-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+  .ig-username { font-weight: 600; font-size: 13px; color: #1A1814; }
+  .ig-image { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .ig-image-placeholder { width: 100%; aspect-ratio: 1; background: var(--cream); display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 13px; flex-direction: column; gap: 6px; }
+  .ig-actions { padding: 8px 12px 4px; display: flex; gap: 14px; }
+  .ig-action-icon { font-size: 22px; cursor: default; }
+  .ig-caption { padding: 0 12px 6px; font-size: 13px; line-height: 1.5; color: #1A1814; }
+  .ig-caption strong { font-weight: 600; }
+  .ig-hashtags { padding: 0 12px 12px; font-size: 13px; color: #00376B; line-height: 1.6; }
+
+  /* Portfolio mock */
+  .pf-preview { max-width: 680px; margin: 0 auto; background: white; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .pf-hero { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .pf-hero-placeholder { width: 100%; height: 200px; background: var(--cream); display: flex; align-items: center; justify-content: center; color: var(--ink-faint); font-size: 13px; }
+  .pf-body { padding: 1.5rem 2rem; }
+  .pf-project-type { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+  .pf-title { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.3px; margin-bottom: 1.25rem; }
+  .pf-content { font-size: 14px; line-height: 1.8; color: var(--ink-muted); white-space: pre-wrap; }
+  .section-label { font-weight: 600; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); display: block; margin: 1.25rem 0 0.4rem; }
+  .pf-tools { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; }
+  .pf-tool-tag { font-size: 11px; font-weight: 500; background: var(--cream); border: 1px solid var(--border); color: var(--ink-muted); padding: 4px 10px; border-radius: 100px; }
+
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1.25rem; text-align: center; color: var(--ink-muted); min-height: 260px; }
+  .empty-icon { font-family: 'DM Serif Display', serif; font-size: 40px; font-style: italic; color: var(--ink-faint); margin-bottom: 0.75rem; display: block; }
+  .loading-state { display: none; align-items: center; justify-content: center; padding: 3rem; flex-direction: column; gap: 12px; min-height: 260px; }
+  .loading-state.active { display: flex; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-label { font-size: 13px; color: var(--ink-muted); font-style: italic; font-family: 'DM Serif Display', serif; }
+  .hashtag-pill { display: inline-block; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 100px; margin: 3px 3px 0 0; }
+  .keyword-pill { display: inline-block; background: var(--cream); border: 1px solid var(--border); color: var(--ink-muted); font-size: 12px; padding: 4px 11px; border-radius: 100px; margin: 3px 3px 0 0; }
+  .keyword-grid { display: flex; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .insight-box { background: var(--cream); border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 0.75rem; }
+  .insight-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 4px; }
+  .section-divider { height: 1px; background: var(--border); margin: 1rem 0; }
+  .saved-header { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 0.75rem; }
+  .saved-card { background: var(--cream); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
+  .saved-card:hover { border-color: var(--border-strong); background: white; }
+  .saved-card-name { font-weight: 500; font-size: 13px; }
+  .saved-card-meta { font-size: 11px; color: var(--ink-muted); margin-top: 3px; }
+  .platform-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-right: 4px; }
+  .badge-li { background: #E8F0FB; color: var(--linkedin); }
+  .badge-ig { background: #FAE8F3; color: var(--instagram); }
+  .badge-pf { background: #E8F3EF; color: var(--portfolio); }
+  .trend-status { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="wordmark">fo<em>l</em>io</div>
+    <div class="tagline">Turn your work into words, everywhere.</div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Input panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Project Details</span>
+        <span class="step-badge">Step 1</span>
+      </div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Project name</label>
+          <input type="text" id="projectName" placeholder="e.g. Qualifi — Skills-Verified Job Platform" />
+        </div>
+        <div class="field field-row">
+          <div>
+            <label>Industry / Type</label>
+            <select id="industry">
+              <option value="design">Design (general)</option>
+              <option value="ux design">UX / Product Design</option>
+              <option value="branding">Branding & Identity</option>
+              <option value="web development">Web Development</option>
+              <option value="motion design">Motion & Animation</option>
+              <option value="advertising">Advertising & Campaigns</option>
+              <option value="social media">Social Media</option>
+              <option value="design research">Research & Strategy</option>
+            </select>
+          </div>
+          <div>
+            <label>Tools used</label>
+            <input type="text" id="tools" placeholder="Figma, React, Vercel..." />
+          </div>
+        </div>
+
+        <!-- Image upload — hidden input is OUTSIDE the styled zone so overflow:hidden can't block it -->
+        <div class="field">
+          <label>Project image <span style="font-weight:400;color:var(--ink-faint)">(optional — shows in previews)</span></label>
+          <input type="file" id="imageInput" accept="image/*" style="display:none;" />
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()">
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <span class="upload-icon">🖼</span>
+              <div class="upload-label"><strong>Click to upload</strong> or drag & drop</div>
+              <div class="upload-label" style="margin-top:3px;font-size:11px;">PNG, JPG, GIF — any size</div>
+            </div>
+            <img id="uploadPreview" class="upload-preview" style="display:none;" alt="Project preview" />
+          </div>
+          <div class="image-actions" id="imageActions" style="display:none;">
+            <button class="img-action-btn" onclick="removeImage()">Remove</button>
+            <button class="img-action-btn" onclick="document.getElementById('imageInput').click()">Replace</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>The problem or brief</label>
+          <textarea id="problem" rows="2" placeholder="What challenge were you solving? Who was the client or audience?"></textarea>
+        </div>
+        <div class="field">
+          <label>Your process</label>
+          <textarea id="process" rows="2" placeholder="What did you do? How did you approach it?"></textarea>
+        </div>
+        <div class="field">
+          <label>Outcome / results</label>
+          <textarea id="outcome" rows="2" placeholder="What changed? Even qualitative wins count."></textarea>
+        </div>
+        <div class="field">
+          <label>Tone</label>
+          <div class="tone-row">
+            <button class="tone-btn active" data-tone="professional">Professional</button>
+            <button class="tone-btn" data-tone="conversational">Conversational</button>
+            <button class="tone-btn" data-tone="bold">Bold</button>
+            <button class="tone-btn" data-tone="reflective">Reflective</button>
+          </div>
+        </div>
+        <button class="generate-btn" id="generateBtn" onclick="generateContent()">Generate content →</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Related Keywords</span>
+        <span class="live-badge"><span class="live-dot"></span>Datamuse</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:12px;color:var(--ink-muted);margin-bottom:0.75rem;">Keywords pulled live from the Datamuse API based on your industry — they inform vocabulary and hashtag generation in your content.</p>
+        <div id="keywordContainer">
+          <div style="text-align:center;padding:1.5rem 0;color:var(--ink-faint);font-style:italic;font-family:'DM Serif Display',serif;font-size:16px;">Loading...</div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="saved-header">Saved Projects</div>
+        <div id="savedProjects">
+          <p style="font-size:12px;color:var(--ink-faint);text-align:center;padding:1rem 0;">No saved projects yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output panel -->
+    <div class="panel output-panel">
+      <div class="panel-header" style="gap:12px;">
+        <span class="panel-title">Generated Content</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+          <div class="view-toggle" id="viewToggle" style="display:none;">
+            <button class="view-btn active" data-view="preview" onclick="setView('preview')">Preview</button>
+            <button class="view-btn" data-view="raw" onclick="setView('raw')">Raw text</button>
+          </div>
+          <span class="step-badge">Step 2</span>
+        </div>
+      </div>
+      <div class="platform-tabs">
+        <button class="tab-btn active" data-tab="linkedin" onclick="switchTab('linkedin')"><span class="tab-dot" style="background:var(--linkedin)"></span>LinkedIn</button>
+        <button class="tab-btn" data-tab="instagram" onclick="switchTab('instagram')"><span class="tab-dot" style="background:var(--instagram)"></span>Instagram</button>
+        <button class="tab-btn" data-tab="portfolio" onclick="switchTab('portfolio')"><span class="tab-dot" style="background:var(--portfolio)"></span>Portfolio</button>
+      </div>
+      <div class="output-area">
+        <div class="loading-state" id="loadingState">
+          <div class="spinner"></div>
+          <div class="loading-label">Writing your story...</div>
+        </div>
+        <div id="emptyState" class="empty-state">
+          <span class="empty-icon">fo</span>
+          <p>Fill in your project details and hit <strong>Generate</strong> to see LinkedIn, Instagram, and portfolio content with live post previews.</p>
+        </div>
+
+        <!-- LinkedIn -->
+        <div id="linkedinPane" class="output-pane">
+          <div class="preview-view" id="liPreview">
+            <div class="li-preview">
+              <div class="li-header">
+                <div class="li-avatar" id="liAvatar">G</div>
+                <div><div class="li-name" id="liName">Your Name</div><div class="li-meta">Designer · Just now</div></div>
+              </div>
+              <div class="li-body" id="liPreviewBody"></div>
+              <div id="liImageWrap">
+                <div class="li-image-placeholder" id="liImagePlaceholder">Upload an image to see it here</div>
+                <img id="liImage" class="li-image" style="display:none;" alt="" />
+              </div>
+              <div class="li-actions">
+                <span class="li-action">👍 Like</span>
+                <span class="li-action">💬 Comment</span>
+                <span class="li-action">↗️ Repost</span>
+              </div>
+            </div>
+          </div>
+          <div class="raw-view" id="liRaw" style="display:none;">
+            <div class="output-content" id="linkedinContent"></div>
+            <div class="output-meta">
+              <span class="char-count" id="linkedinCount"></span>
+              <button class="copy-btn" onclick="copyContent('linkedin', this)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instagram -->
+        <div id="instagramPane" class="output-pane">
+          <div class="preview-view" id="igPreview">
+            <div class="ig-preview">
+              <div class="ig-header">
+                <div class="ig-avatar" id="igAvatar">G</div>
+                <span class="ig-username">yourhandle</span>
+              </div>
+              <div id="igImageWrap">
+                <div class="ig-image-placeholder" id="igImagePlaceholder"><span style="font-size:28px;">🖼</span><span>Upload an image to see it here</span></div>
+                <img id="igImage" class="ig-image" style="display:none;" alt="" />
+              </div>
+              <div class="ig-actions">
+                <span class="ig-action-icon">🤍</span>
+                <span class="ig-action-icon">💬</span>
+                <span class="ig-action-icon">↗️</span>
+              </div>
+              <div class="ig-caption"><strong>yourhandle</strong> <span id="igPreviewBody"></span></div>
+              <div class="ig-hashtags" id="igPreviewHashtags"></div>
+            </div>
+          </div>
+          <div class="raw-view" id="igRaw" style="display:none;">
+            <div class="output-content" id="instagramContent"></div>
+            <div id="instagramHashtags" style="margin-top:0.75rem;"></div>
+            <div class="output-meta">
+              <span class="char-count" id="instagramCount"></span>
+              <button class="copy-btn" onclick="copyContent('instagram', this)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Portfolio -->
+        <div id="portfolioPane" class="output-pane">
+          <div class="preview-view" id="pfPreview">
+            <div class="pf-preview">
+              <div id="pfImageWrap">
+                <div class="pf-hero-placeholder" id="pfImagePlaceholder">Upload an image to see it here</div>
+                <img id="pfImage" class="pf-hero" style="display:none;" alt="" />
+              </div>
+              <div class="pf-body">
+                <div class="pf-project-type" id="pfType">Design Project</div>
+                <div class="pf-title" id="pfTitle">Project Name</div>
+                <div class="pf-content" id="pfPreviewBody"></div>
+                <div class="pf-tools" id="pfTools"></div>
+              </div>
+            </div>
+          </div>
+          <div class="raw-view" id="pfRaw" style="display:none;">
+            <div class="output-content" id="portfolioContent"></div>
+            <div class="output-meta">
+              <span class="char-count" id="portfolioCount"></span>
+              <button class="copy-btn" onclick="copyContent('portfolio', this)">Copy</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Industry keyword seeds — specific phrases so Datamuse returns relevant terms ──
+const INDUSTRY_QUERIES = {
+  'design':          ['graphic design', 'visual design'],
+  'ux design':       ['user experience design', 'product design'],
+  'branding':        ['brand identity', 'visual identity'],
+  'web development': ['web development', 'frontend engineering'],
+  'motion design':   ['motion graphics', 'animation design'],
+  'advertising':     ['advertising creative', 'marketing campaign'],
+  'social media':    ['social media marketing', 'content creation'],
+  'design research': ['user research', 'design thinking'],
+};
+
+let selectedTone = 'professional';
+let currentTab = 'linkedin';
+let currentView = 'preview';
+let relatedKeywords = [];
+let generatedHashtags = [];
+let generatedContent = { linkedin: '', instagram: '', portfolio: '' };
+let uploadedImageSrc = null;
+
+// ── Tone buttons ──
+document.querySelectorAll('.tone-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedTone = btn.dataset.tone;
+  });
+});
+
+document.getElementById('industry').addEventListener('change', e => fetchKeywords(e.target.value));
+
+// ── Image upload — input is outside the zone div, triggered by click ──
+const imageInput = document.getElementById('imageInput');
+imageInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    uploadedImageSrc = ev.target.result;
+    document.getElementById('uploadPreview').src = uploadedImageSrc;
+    document.getElementById('uploadPreview').style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('uploadZone').classList.add('has-image');
+    document.getElementById('imageActions').style.display = 'flex';
+    updatePreviewImages();
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeImage() {
+  uploadedImageSrc = null;
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('uploadPreview').src = '';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('uploadZone').classList.remove('has-image');
+  document.getElementById('imageActions').style.display = 'none';
+  imageInput.value = '';
+  updatePreviewImages();
+}
+
+function updatePreviewImages() {
+  const has = !!uploadedImageSrc;
+  ['li','ig','pf'].forEach(p => {
+    document.getElementById(p+'Image').src = has ? uploadedImageSrc : '';
+    document.getElementById(p+'Image').style.display = has ? 'block' : 'none';
+    document.getElementById(p+'ImagePlaceholder').style.display = has ? 'none' : 'flex';
+  });
+}
+
+// Drag and drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--accent)'; });
+zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    imageInput.files = dt.files;
+    imageInput.dispatchEvent(new Event('change'));
+  }
+});
+
+// ── View toggle ──
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  updateViewForTab(currentTab);
+}
+
+function updateViewForTab(tab) {
+  const map = { linkedin: ['liPreview','liRaw'], instagram: ['igPreview','igRaw'], portfolio: ['pfPreview','pfRaw'] };
+  const [pId, rId] = map[tab];
+  document.getElementById(pId).style.display = currentView === 'preview' ? 'block' : 'none';
+  document.getElementById(rId).style.display = currentView === 'raw' ? 'block' : 'none';
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  ['linkedin','instagram','portfolio'].forEach(t => document.getElementById(t+'Pane').style.display = t === tab ? 'block' : 'none');
+  updateViewForTab(tab);
+}
+
+function showEmpty() {
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('loadingState').classList.remove('active');
+  document.getElementById('viewToggle').style.display = 'none';
+  ['linkedin','instagram','portfolio'].forEach(t => document.getElementById(t+'Pane').style.display = 'none');
+}
+
+function showLoading() {
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('loadingState').classList.add('active');
+  document.getElementById('viewToggle').style.display = 'none';
+  ['linkedin','instagram','portfolio'].forEach(t => document.getElementById(t+'Pane').style.display = 'none');
+}
+
+function showResults() {
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('loadingState').classList.remove('active');
+  document.getElementById('viewToggle').style.display = 'flex';
+  switchTab(currentTab);
+}
+
+// ── Datamuse API ──
+async function fetchKeywords(industry) {
+  const container = document.getElementById('keywordContainer');
+  container.innerHTML = `<div style="text-align:center;padding:1rem 0;color:var(--ink-faint);font-size:13px;">Fetching...</div>`;
+  try {
+    const queries = INDUSTRY_QUERIES[industry] || INDUSTRY_QUERIES['design'];
+    const [r1, r2] = await Promise.all([
+      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(queries[0])}&max=12`),
+      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(queries[1])}&max=8`)
+    ]);
+    const [w1, w2] = await Promise.all([r1.json(), r2.json()]);
+    const all = [...w1, ...w2]
+      .filter(w => w.word && w.word.split(' ').length <= 2)
+      .sort((a,b) => (b.score||0)-(a.score||0))
+      .reduce((acc, w) => { if (!acc.find(x => x.word === w.word)) acc.push(w); return acc; }, [])
+      .slice(0, 16);
+    relatedKeywords = all.map(w => w.word);
+    generatedHashtags = relatedKeywords.slice(0,10).map(w =>
+      '#' + w.split(' ').map(p => p.charAt(0).toUpperCase()+p.slice(1)).join('')
+    );
+    container.innerHTML = `
+      <div class="keyword-grid">${relatedKeywords.map(w=>`<span class="keyword-pill">${w}</span>`).join('')}</div>
+      <div class="insight-box">
+        <div class="insight-label">Generated hashtags</div>
+        <div>${generatedHashtags.map(h=>`<span class="hashtag-pill">${h}</span>`).join('')}</div>
+      </div>
+      <p class="trend-status">Datamuse API · ${relatedKeywords.length} terms · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</p>
+    `;
+  } catch {
+    relatedKeywords = ['design','creative work','portfolio'];
+    generatedHashtags = ['#Design','#CreativeWork','#Portfolio'];
+    container.innerHTML = `<p style="font-size:12px;color:var(--ink-muted);">Could not reach Datamuse. Using fallback terms.</p>`;
+  }
+}
+
+fetchKeywords('design');
+
+// ── Claude API via serverless function ──
+async function generateContent() {
+  const name     = document.getElementById('projectName').value.trim();
+  const industry = document.getElementById('industry').value;
+  const tools    = document.getElementById('tools').value.trim();
+  const problem  = document.getElementById('problem').value.trim();
+  const process  = document.getElementById('process').value.trim();
+  const outcome  = document.getElementById('outcome').value.trim();
+
+  if (!name || !problem) { alert('Please fill in at least the project name and problem.'); return; }
+
+  document.getElementById('generateBtn').disabled = true;
+  showLoading();
+
+  if (relatedKeywords.length === 0) await fetchKeywords(industry);
+
+  const prompt = `You are a content strategist helping designers articulate their work across platforms. Generate THREE pieces of content.
+
+PROJECT:
+Name: ${name}
+Type: ${industry}
+Tools: ${tools||'not specified'}
+Problem: ${problem}
+Process: ${process||'not specified'}
+Outcome: ${outcome||'not specified'}
+Tone: ${selectedTone}
+Related keywords (from Datamuse API): ${relatedKeywords.slice(0,12).join(', ')}
+Suggested hashtags: ${generatedHashtags.join(' ')}
+
+Output in EXACTLY this format — no extra text before or after:
+
+---LINKEDIN---
+[150-280 words. Strong hook — never "I'm excited to share." First-person. Short paragraphs. Weave in 1-2 related keywords naturally. End with a question or CTA. No hashtags.]
+
+---INSTAGRAM---
+[50-80 words. Visual-first language. Casual and punchy. Then a blank line, then 8-10 hashtags from the suggested list on one line.]
+
+---PORTFOLIO---
+[Case study. ALL CAPS section labels on their own lines: OVERVIEW, THE CHALLENGE, MY APPROACH, THE OUTCOME. 2-4 sentences each. Professional but human. ~300 words. No markdown, no bullets.]`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Server error');
+
+    const text = data.content[0].text;
+    const liMatch = text.match(/---LINKEDIN---([\s\S]*?)---INSTAGRAM---/);
+    const igMatch = text.match(/---INSTAGRAM---([\s\S]*?)---PORTFOLIO---/);
+    const pfMatch = text.match(/---PORTFOLIO---([\s\S]*)$/);
+    const li = liMatch ? liMatch[1].trim() : '';
+    const ig = igMatch ? igMatch[1].trim() : '';
+    const pf = pfMatch ? pfMatch[1].trim() : '';
+
+    generatedContent = { linkedin: li, instagram: ig, portfolio: pf };
+
+    // Raw panels
+    document.getElementById('linkedinContent').textContent = li;
+    document.getElementById('linkedinCount').textContent = li.length + ' characters';
+    document.getElementById('instagramContent').textContent = ig;
+    document.getElementById('instagramCount').textContent = ig.length + ' characters';
+    document.getElementById('portfolioContent').textContent = pf;
+    document.getElementById('portfolioCount').textContent = pf.length + ' characters';
+
+    // Instagram split
+    const igLines = ig.split('\n');
+    const tagIdx = igLines.findIndex(l => l.trim().startsWith('#'));
+    const igBody = tagIdx > -1 ? igLines.slice(0,tagIdx).join('\n').trim() : ig;
+    const igTagStr = tagIdx > -1 ? igLines.slice(tagIdx).join(' ').trim() : generatedHashtags.join(' ');
+    document.getElementById('instagramHashtags').innerHTML = igTagStr.split(/\s+/).filter(t=>t.startsWith('#')).map(t=>`<span class="hashtag-pill">${t}</span>`).join('');
+
+    // Previews
+    const initial = (name.charAt(0)||'G').toUpperCase();
+    document.getElementById('liAvatar').textContent = initial;
+    document.getElementById('liName').textContent = name.split('—')[0].trim() || 'Your Name';
+    document.getElementById('liPreviewBody').textContent = li;
+    document.getElementById('igAvatar').textContent = initial;
+    document.getElementById('igPreviewBody').textContent = igBody;
+    document.getElementById('igPreviewHashtags').textContent = igTagStr;
+    document.getElementById('pfType').textContent = industry.charAt(0).toUpperCase() + industry.slice(1);
+    document.getElementById('pfTitle').textContent = name;
+    document.getElementById('pfPreviewBody').innerHTML = pf.replace(/(OVERVIEW|THE CHALLENGE|MY APPROACH|THE OUTCOME)/g,'<span class="section-label">$1</span>');
+    document.getElementById('pfTools').innerHTML = (tools ? tools.split(',').map(t=>t.trim()).filter(Boolean) : []).map(t=>`<span class="pf-tool-tag">${t}</span>`).join('');
+
+    updatePreviewImages();
+    saveProject(name, industry);
+    showResults();
+  } catch(err) {
+    alert('Generation failed: ' + err.message);
+    showEmpty();
+  } finally {
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+// ── Copy ──
+function copyContent(tab, btn) {
+  let text = tab === 'instagram'
+    ? document.getElementById('instagramContent').textContent + '\n\n' +
+      [...document.getElementById('instagramHashtags').querySelectorAll('.hashtag-pill')].map(el=>el.textContent).join(' ')
+    : document.getElementById(tab+'Content').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent; btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// ── Saved projects ──
+function saveProject(name, industry) {
+  const projects = JSON.parse(localStorage.getItem('folio_projects')||'[]');
+  projects.unshift({ name, industry, date: new Date().toLocaleDateString(), content: generatedContent });
+  if (projects.length > 6) projects.pop();
+  localStorage.setItem('folio_projects', JSON.stringify(projects));
+  renderSaved();
+}
+
+function renderSaved() {
+  const projects = JSON.parse(localStorage.getItem('folio_projects')||'[]');
+  const container = document.getElementById('savedProjects');
+  if (!projects.length) { container.innerHTML='<p style="font-size:12px;color:var(--ink-faint);text-align:center;padding:1rem 0;">No saved projects yet.</p>'; return; }
+  container.innerHTML = projects.map((p,i)=>`
+    <div class="saved-card" onclick="loadSaved(${i})">
+      <div class="saved-card-name">${p.name}</div>
+      <div class="saved-card-meta"><span class="platform-badge badge-li">LI</span><span class="platform-badge badge-ig">IG</span><span class="platform-badge badge-pf">PF</span>${p.date}</div>
+    </div>`).join('');
+}
+
+function loadSaved(i) {
+  const p = JSON.parse(localStorage.getItem('folio_projects')||'[]')[i];
+  if (!p) return;
+  generatedContent = p.content;
+  document.getElementById('linkedinContent').textContent = p.content.linkedin;
+  document.getElementById('linkedinCount').textContent = p.content.linkedin.length+' characters';
+  document.getElementById('instagramContent').textContent = p.content.instagram;
+  document.getElementById('instagramCount').textContent = p.content.instagram.length+' characters';
+  document.getElementById('portfolioContent').textContent = p.content.portfolio;
+  document.getElementById('portfolioCount').textContent = p.content.portfolio.length+' characters';
+  document.getElementById('liPreviewBody').textContent = p.content.linkedin;
+  document.getElementById('pfTitle').textContent = p.name;
+  document.getElementById('pfPreviewBody').innerHTML = p.content.portfolio.replace(/(OVERVIEW|THE CHALLENGE|MY APPROACH|THE OUTCOME)/g,'<span class="section-label">$1</span>');
+  showResults();
+}
+
+renderSaved();
+showEmpty();
+</script>
+</body>
+</html>
