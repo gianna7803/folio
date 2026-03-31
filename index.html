@@ -496,7 +496,7 @@ function showEmpty() {
 
 function showLoading() {
   document.getElementById('emptyState').style.display = 'none';
-  document.getElementById('loadingState').classList.add('active');
+  document.getElementById('loadhttps://api.datamuse.comclassList.add('active');
   document.getElementById('viewToggle').style.display = 'none';
   ['linkedin','instagram','portfolio'].forEach(t => document.getElementById(t+'Pane').style.display = 'none');
 }
@@ -508,15 +508,28 @@ function showResults() {
   switchTab(currentTab);
 }
 
-// ── Datamuse API ──────────────────────────────────────────────────────────────
+// Curated seed phrases per industry — specific enough for Datamuse to return useful terms
+const INDUSTRY_QUERIES = {
+  'design':          ['graphic design', 'visual design', 'creative work'],
+  'ux design':       ['user experience', 'product design', 'usability'],
+  'branding':        ['brand identity', 'logo design', 'visual identity'],
+  'web development': ['frontend development', 'web design', 'coding'],
+  'motion design':   ['animation', 'motion graphics', 'visual effects'],
+  'advertising':     ['advertising campaign', 'marketing creative', 'copywriting'],
+  'social media':    ['content creation', 'social media marketing', 'digital content'],
+  'design research': ['user research', 'design thinking', 'design strategy'],
+};
+
 async function fetchKeywords(industry) {
   const container = document.getElementById('keywordContainer');
   container.innerHTML = `<div style="text-align:center;padding:1rem 0;color:var(--ink-faint);font-size:13px;">Fetching...</div>`;
   try {
-    const query = encodeURIComponent(industry);
+    const queries = INDUSTRY_QUERIES[industry] || INDUSTRY_QUERIES['design'];
+    const query = encodeURIComponent(queries[0]);
+    const query2 = encodeURIComponent(queries[1]);
     const [mlRes, relRes] = await Promise.all([
-      fetch(`https://api.datamuse.com/words?ml=${query}&max=16`),
-      fetch(`https://api.datamuse.com/words?rel_trg=${query}&max=8`)
+      fetch(`https://api.datamuse.com/words?ml=${query}&max=12`),
+      fetch(`https://api.datamuse.com/words?ml=${query2}&max=8`)
     ]);
     const mlWords = await mlRes.json();
     const relWords = await relRes.json();
